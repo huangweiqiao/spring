@@ -22,6 +22,8 @@ import org.springframework.core.AttributeAccessor;
 import org.springframework.lang.Nullable;
 
 /**
+ * spring 用该类描述bean定义的相关信息
+ *
  * A BeanDefinition describes a bean instance, which has property values,
  * constructor argument values, and further information supplied by
  * concrete implementations.

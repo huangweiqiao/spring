@@ -31,6 +31,9 @@ import org.springframework.util.StringUtils;
  * definitions. If you don't care about BeanNameAware and the like,
  * registering RootBeanDefinition or ChildBeanDefinition is good enough.
  *
+ * 这个相当于beanFactory中的 beanDefinitionMap中的键值对，当然这个对象还多了别名，
+ * 因为spring里是允许bean对象有别名
+ *
  * @author Juergen Hoeller
  * @since 1.0.2
  * @see org.springframework.beans.factory.BeanNameAware
