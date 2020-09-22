@@ -65,13 +65,20 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * through {@link #register} calls and then manually {@linkplain #refresh refreshed}.
 	 */
 	public AnnotationConfigApplicationContext() {
-		//执行这个构造函数前，其实会先去执行父类的无参构造函数（在父类的无参构造函数里创建了beanFacotry(DefaultListableBeanFactory对象)）
-		//是BeanDefinition的读取器（给一个类给它，它就可以读取相应的信息封装成BeanDefinition对象，
-		// 例如一个加了@Service注解的 OrderService类就会封装成一个名字为orderService的BeanDefinition对象(name,singleton,scope,lazyInit,dependsOn,primary 等信息)）
-		//这个类只能读取加了注解的类
+		/**
+		 * 执行这个构造函数前，其实会先去执行父类的无参构造函数（在父类的无参构造函数里创建了beanFacotry(DefaultListableBeanFactory对象)）
+		 * reader 是BeanDefinition的读取器（给一个类给它，它就可以读取相应的信息封装成BeanDefinition对象，
+		 * 例如一个加了@Service注解的 OrderService类就会封装成一个名字为orderService的BeanDefinition对象(name,singleton,scope,lazyInit,dependsOn,primary 等信息)）
+		 * 这个类只能读取加了注解的类
+		 */
 		this.reader = new AnnotatedBeanDefinitionReader(this);
 
-		//beanDefinition的扫描器，能够扫描一个类，并且转换成BeanDefinition对象
+		/**
+		 * scanner是 beanDefinition的扫描器，能够扫描包或者类，并且转换成BeanDefinition对象，
+		 * 但是正常情况下程序启动，扫描包的工作不是这个对象完成的，
+		 * 这个对象只是提供给程序员调用 applicationContext.scan(); 时进行扫描,也就是说程序员调用当前这个context对象的scan方法时用到了这个 scanner，
+		 * 如果程序员没有自己扫描的需求那这个scanner就没什么用了。
+		 */
 		this.scanner = new ClassPathBeanDefinitionScanner(this);
 	}
 

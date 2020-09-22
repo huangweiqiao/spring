@@ -88,11 +88,19 @@ abstract class ConfigurationClassUtils {
 		if (beanDef instanceof AnnotatedBeanDefinition &&
 				className.equals(((AnnotatedBeanDefinition) beanDef).getMetadata().getClassName())) {
 			// Can reuse the pre-parsed metadata from the given BeanDefinition...
+			/**
+			 * 如果BeanDefinition是AnnotatedBeanDefinition的实现类，并且className 和 BeanDefinition中的元数据的类名相同
+			 * 则直接从BeanDefinition获取Matadata
+			 */
 			metadata = ((AnnotatedBeanDefinition) beanDef).getMetadata();
 		}
 		else if (beanDef instanceof AbstractBeanDefinition && ((AbstractBeanDefinition) beanDef).hasBeanClass()) {
 			// Check already loaded Class if present...
 			// since we possibly can't even load the class file for this Class.
+			/**
+			 * 如果beanDef是AbstractBeanDefinition的实例，并且beanDef有 beanClass属性存在，
+			 * 则实例化 StandardAnnotationMetadata
+			 */
 			Class<?> beanClass = ((AbstractBeanDefinition) beanDef).getBeanClass();
 			metadata = new StandardAnnotationMetadata(beanClass, true);
 		}
@@ -109,10 +117,15 @@ abstract class ConfigurationClassUtils {
 			}
 		}
 
+		//判断是否加了 @Configuration注解,如果存在则认为是全注解的类
 		if (isFullConfigurationCandidate(metadata)) {
+			//如果存在@Configuration注解，则为BeanDefinition设置configurationClass属性为 full
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
 		}
+		//如果没有加@Configuration注解 则判断是否加了 @Component /@ComponentScan/ @Import /@ImportResource
+		//如果存在 @Component /@ComponentScan/ @Import /@ImportResource 注解则认为是部分注解类
 		else if (isLiteConfigurationCandidate(metadata)) {
+			//如果存在 @Component @ComponentScan @Import @ImportResource注解，则为BeanDefinition设置configurationClass属性为 lite
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
 		}
 		else {

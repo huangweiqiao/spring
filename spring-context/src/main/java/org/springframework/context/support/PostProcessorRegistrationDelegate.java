@@ -56,9 +56,14 @@ final class PostProcessorRegistrationDelegate {
 
 		if (beanFactory instanceof BeanDefinitionRegistry) {
 			BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
+			/**
+			 * 方法的入参 beanFactoryPostProcessors 都是程序手动添加的 BeanFactoryPostProcessor,
+			 * BeanDefinitionRegistryPostProcessor 继承了 BeanFactoryPostProcessor，扩展多了一个方法，因此两个类型的作用不一样
+			 * 所以这里定义了两个list将他们分开
+			 */
 			List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>();
 			List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
-
+			// beanFactoryPostProcessors这里面的对象是我们这样的开发人员定义的对象
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryProcessor =
@@ -75,9 +80,20 @@ final class PostProcessorRegistrationDelegate {
 			// uninitialized to let the bean factory post-processors apply to them!
 			// Separate between BeanDefinitionRegistryPostProcessors that implement
 			// PriorityOrdered, Ordered, and the rest.
+			// 这个 currentRegistryProcessors 放的是spring内部自己实现了 BeanDefinitionRegistryPostProcessor接口的对象
 			List<BeanDefinitionRegistryPostProcessor> currentRegistryProcessors = new ArrayList<>();
 
 			// First, invoke the BeanDefinitionRegistryPostProcessors that implement PriorityOrdered.
+			/**
+			 * 这个地方可以得到一个BeanFactoryPostProcessor,因为是spring在AnnotationConfigApplicationContext的构造
+			 * 函数中new AnnotationBeanDefinitionReader()时自己注册的
+			 * 为什么要在最开始注册呢？因为spring的工厂需要继续扫描等等功能
+			 * 而这些功能都是需要在spring工厂初始化完成之前执行
+			 * 要么在工厂最开始的时候、要么在工厂初始化之中，反正不能在之后
+			 * 因为在之后就没有意义了，因为那个时候已经需要使用工厂了
+			 * 所以这里spring在一开始就注册了一个BeanFactoryPostProcessor,用来插手BeanFactory的实例化过程
+			 * 在这个地方断点可以知道这个类叫做 ConfigurationClassPostProcessor
+			 */
 			String[] postProcessorNames =
 					beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 			for (String ppName : postProcessorNames) {
@@ -86,9 +102,14 @@ final class PostProcessorRegistrationDelegate {
 					processedBeans.add(ppName);
 				}
 			}
+			//排序
 			sortPostProcessors(currentRegistryProcessors, beanFactory);
+			//合并
 			registryProcessors.addAll(currentRegistryProcessors);
+			//这里非常重要
+			//执行所有的 BeanDefinitionRegistryPostProcessor （spring内置的和自己手动添加的）
 			invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
+
 			currentRegistryProcessors.clear();
 
 			// Next, invoke the BeanDefinitionRegistryPostProcessors that implement Ordered.
@@ -101,7 +122,9 @@ final class PostProcessorRegistrationDelegate {
 			}
 			sortPostProcessors(currentRegistryProcessors, beanFactory);
 			registryProcessors.addAll(currentRegistryProcessors);
+
 			invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
+
 			currentRegistryProcessors.clear();
 
 			// Finally, invoke all other BeanDefinitionRegistryPostProcessors until no further ones appear.
@@ -123,7 +146,14 @@ final class PostProcessorRegistrationDelegate {
 			}
 
 			// Now, invoke the postProcessBeanFactory callback of all processors handled so far.
+			/**
+			 * 这里执行BeanFactoryPostProcessor的回调，前面不是吗？
+			 * 前面执行的是  BeanFactoryPostProcessor 的子类 BeanDefinitionRegistryPostProcessor的回调，
+			 * 这里是执行 BeanFactoryPostProcessor 的postProcessBeanFactory
+			 * ConfigurationClassPostProcessor
+			 */
 			invokeBeanFactoryPostProcessors(registryProcessors, beanFactory);
+			//这里执行自定义的 BeanFactoryPostProcessor,如果我们自己没有定义那就不用看
 			invokeBeanFactoryPostProcessors(regularPostProcessors, beanFactory);
 		}
 
@@ -132,6 +162,7 @@ final class PostProcessorRegistrationDelegate {
 			invokeBeanFactoryPostProcessors(beanFactoryPostProcessors, beanFactory);
 		}
 
+		//下面的代码基本没什么意思了，经过上面处理过程之后，processedBeans.contains(ppName) 已经包含了（除非在处理完上面的逻辑后，又新加了），因此后面不会在处理了
 		// Do not initialize FactoryBeans here: We need to leave all regular beans
 		// uninitialized to let the bean factory post-processors apply to them!
 		String[] postProcessorNames =
@@ -263,10 +294,12 @@ final class PostProcessorRegistrationDelegate {
 
 	/**
 	 * Invoke the given BeanDefinitionRegistryPostProcessor beans.
+	 * 注意对比下面这两个方法
+	 * BeanDefinitionRegistryPostProcessor 和 BeanFactoryPostProcessor
 	 */
 	private static void invokeBeanDefinitionRegistryPostProcessors(
 			Collection<? extends BeanDefinitionRegistryPostProcessor> postProcessors, BeanDefinitionRegistry registry) {
-
+		//这个集合里大部分情况只有一个对象，就是 ConfigurationClassPostProcessor
 		for (BeanDefinitionRegistryPostProcessor postProcessor : postProcessors) {
 			postProcessor.postProcessBeanDefinitionRegistry(registry);
 		}

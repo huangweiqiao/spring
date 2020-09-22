@@ -72,8 +72,11 @@ class ComponentScanAnnotationParser {
 		this.registry = registry;
 	}
 
-
+	//解析扫描的基本信息，比如是否过滤，懒加载。。。
 	public Set<BeanDefinitionHolder> parse(AnnotationAttributes componentScan, final String declaringClass) {
+		//自己又new了一个扫描器进行扫描，这里也恰好验证了之前说 AnnotationConfigApplicationContext.scanner 中的scanner没什么用
+		//因为 这里spring扫描类时是重新new的扫描器，因此 AnnotationConfigApplicationContext.scanner 中的scanner 只是程序员在
+		// 调用 AnnotationConfigApplicationContext.scan()方法时才用到
 		ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(this.registry,
 				componentScan.getBoolean("useDefaultFilters"), this.environment, this.resourceLoader);
 
@@ -129,6 +132,7 @@ class ComponentScanAnnotationParser {
 				return declaringClass.equals(className);
 			}
 		});
+		//扫描包
 		return scanner.doScan(StringUtils.toStringArray(basePackages));
 	}
 

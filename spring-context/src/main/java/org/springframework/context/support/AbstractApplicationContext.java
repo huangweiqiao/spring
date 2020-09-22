@@ -525,7 +525,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
-			//配置beanFactory的标准上下文特征，例如类加载器，后置处理器，需要忽略的类
+			//配置beanFactory的标准上下文特征，例如类加载器，后置处理器(ApplicationContextAwareProcessor,)，需要忽略的类
 			prepareBeanFactory(beanFactory);
 
 			try {
@@ -534,7 +534,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 				// Invoke factory processors registered as beans in the context.
 				//在spring的环境中去执行已经注册的 BeanFactoryPostProcessor，
-				//设置执行自定义的 BeanFactoryPostProcessors
+				//设置执行自定义的和spring的 BeanFactoryPostProcessors
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
@@ -655,6 +655,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.setBeanClassLoader(getClassLoader());
 		//设置bean表达式解析器，为了能让我们的beanFactory去解析bean的表达式
 		beanFactory.setBeanExpressionResolver(new StandardBeanExpressionResolver(beanFactory.getBeanClassLoader()));
+		//对象与字符串之间的转换  <property ref="dao"> ,将dao转换成一个对象
 		beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
 
 		// Configure the bean factory with context callbacks.
@@ -686,6 +687,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 
 		// Register default environment beans.
+		/**
+		 * 如果自定义的Bean中没有名为 "systemProperties" 和 "systemEnviroment"的 Bean
+		 * 则注册两个Bean ,key为 "systemProperties" 和 "systemEnviroment" value为Map
+		 * 这两个Bean 就是一系列系统配置和环境信息
+		 */
 		if (!beanFactory.containsLocalBean(ENVIRONMENT_BEAN_NAME)) {
 			beanFactory.registerSingleton(ENVIRONMENT_BEAN_NAME, getEnvironment());
 		}
@@ -713,7 +719,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * <p>Must be called before singleton instantiation.
 	 */
 	protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
-		//这个地方需要注意 getBeanFactoryPostProcessors()是获取自定义的，程序员自己写的没有交给spring的(例如没有加 @Component)
+		/**
+		 * 这个地方需要注意 getBeanFactoryPostProcessors()是获取自定义的，手动给spring的BeanFactoryPostProcessor
+		 * 也就是程序员自己写的没有交给spring的(例如没有加 @Component)，如果加了注解则会被spring自动加载，因此不会在这个get的list里。
+		 * 所以是在refresh()前 手动调用context.addBeanFactoryPostProcessor(new xxx()); 加进来的
+		 */
 		PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(beanFactory, getBeanFactoryPostProcessors());
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found in the meantime

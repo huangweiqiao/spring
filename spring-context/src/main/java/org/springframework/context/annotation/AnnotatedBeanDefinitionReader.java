@@ -90,7 +90,7 @@ public class AnnotatedBeanDefinitionReader {
 		Assert.notNull(environment, "Environment must not be null");
 		this.registry = registry;
 		this.conditionEvaluator = new ConditionEvaluator(registry, environment, null);
-		//向beanFacotry中的 beanDefinitionMap 中初始化一些必要的BeanDefinition对象（例如Autowired注解的、common注解的、eventListen的,等等）
+		//向beanFacotry中的 beanDefinitionMap 中初始化一些必要的BeanDefinition对象（例如 ConfigurationClassPostProcessor、 Autowired注解的、common注解的、eventListen的,等等）
 		AnnotationConfigUtils.registerAnnotationConfigProcessors(this.registry);
 	}
 
@@ -228,7 +228,7 @@ public class AnnotatedBeanDefinitionReader {
 
 		/**
 		 * 判断这个类是否需要跳过解析
-		 * 主要判断类有没有加注解
+		 * 主要判断类有没有加注解 @Condition
 		 */
 		if (this.conditionEvaluator.shouldSkip(abd.getMetadata())) {
 			return;
