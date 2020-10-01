@@ -726,16 +726,29 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		if (logger.isDebugEnabled()) {
 			logger.debug("Pre-instantiating singletons in " + this);
 		}
-
+		//所有bean的名字
 		// Iterate over a copy to allow for init methods which in turn register new bean definitions.
 		// While this may not be part of the regular factory bootstrap, it does otherwise work fine.
 		List<String> beanNames = new ArrayList<>(this.beanDefinitionNames);
 
 		// Trigger initialization of all non-lazy singleton beans...
+		//触发所有非延迟加载单例bean的初始化，主要步骤为调用getBean
 		for (String beanName : beanNames) {
+			/**合并父BeanDefinition
+			 * 主要处理 xml中 有继承关系的配置，现在基本不用了 例如
+			 * <bean id="father" class="com.hwq.service.Father">
+			 * 		<property name="userName" value="fatherName"></>
+			 * </bean>
+			 * <bean id="son" parent="father">
+			 *     <property name="userName" value="sonName"></>
+			 * </bean>
+			 * 这样 son这个bean就可以继承 father这个bean的所有bean定义了，但是值会是son自己的
+			 */
 			RootBeanDefinition bd = getMergedLocalBeanDefinition(beanName);
 			if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) {
+				//是否是FactoryBean类
 				if (isFactoryBean(beanName)) {
+					//如果是FactoryBean则加上 beanName前面加上&
 					Object bean = getBean(FACTORY_BEAN_PREFIX + beanName);
 					if (bean instanceof FactoryBean) {
 						FactoryBean<?> factory = (FactoryBean<?>) bean;

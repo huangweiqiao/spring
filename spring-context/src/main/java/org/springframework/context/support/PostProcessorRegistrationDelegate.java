@@ -215,6 +215,7 @@ final class PostProcessorRegistrationDelegate {
 	public static void registerBeanPostProcessors(
 			ConfigurableListableBeanFactory beanFactory, AbstractApplicationContext applicationContext) {
 
+		//从beanFactory中拿出所有 BeanPostProcessor后置处理器
 		String[] postProcessorNames = beanFactory.getBeanNamesForType(BeanPostProcessor.class, true, false);
 
 		// Register BeanPostProcessorChecker that logs an info message when
@@ -332,6 +333,8 @@ final class PostProcessorRegistrationDelegate {
 	 * BeanPostProcessor that logs an info message when a bean is created during
 	 * BeanPostProcessor instantiation, i.e. when a bean is not eligible for
 	 * getting processed by all BeanPostProcessors.
+	 * 当spring的配置中的后置处理器还没有被注册就已经开始了bean的初始化
+	 * 便会打印出BeanPostProcessorChecker中设定的信息
 	 */
 	private static final class BeanPostProcessorChecker implements BeanPostProcessor {
 

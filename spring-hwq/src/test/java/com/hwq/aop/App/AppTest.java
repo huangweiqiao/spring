@@ -15,8 +15,8 @@ import java.lang.reflect.Method;
 public class AppTest {
 
 	public static void main(String[] args) {
-		//configTest();
-		cglibEnhance();
+		configTest();
+		//cglibEnhance();
 	}
 
 
