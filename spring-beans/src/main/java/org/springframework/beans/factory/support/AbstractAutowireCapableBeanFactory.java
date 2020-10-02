@@ -484,6 +484,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			/**
 			 * 生命周期中第一次调用后置处理器，判断当前beanName代表的那个类需不需要自动注入 或 aop代理
 			 * 如果我们的类的属性不想要spring进行自动注入，则可以实现 InstantiationAwareBeanPostProcessor接口
+			 * 在postProcessBeforeInstantiation 方法中返回对象，这样这里获取的对象就不会为空，因此就不会再往后去执行注入的流程了
 			 */
 			Object bean = resolveBeforeInstantiation(beanName, mbdToUse);
 			if (bean != null) {
@@ -496,6 +497,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		try {
+			//开始创建bean
 			Object beanInstance = doCreateBean(beanName, mbdToUse, args);
 			if (logger.isDebugEnabled()) {
 				logger.debug("Finished creating instance of bean '" + beanName + "'");
@@ -538,9 +540,6 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	protected Object doCreateBean(String beanName, RootBeanDefinition mbd, @Nullable Object[] args)
 			throws BeanCreationException {
-		/**
-
-		 */
 		// Instantiate the bean.
 		BeanWrapper instanceWrapper = null;
 		if (mbd.isSingleton()) {
@@ -1123,6 +1122,22 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		/**
 		 * 如果工厂方法不为空，则通过工厂方法构建bean对象
+		 * 这主要是解决xml情况指定了工厂方法的配置
+		 * <bean id="order" class="com.hwq.service.OrderService" factory-method="getObject"></bean>
+		 *
+		 * public class UserService{
+		 *
+		 * }
+		 *
+		 * public class OrderService{
+		 *     public static UserService getObject(){
+		 *         return new UserService();
+		 *     }
+		 * }
+		 * //这里打印的会是 UserService
+		 * System.out.println(context.getBean("order"))
+		 *
+		 * 因为spring初始化bean的时候在这里判断了如果bean有工厂方法就执行工厂方法创建对象
 		 */
 		if (mbd.getFactoryMethodName() != null) {
 			return instantiateUsingFactoryMethod(beanName, mbd, args);
@@ -1161,7 +1176,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		// Candidate constructors for autowiring?
 		/**
-		 * 第二次调用后置处理器 推断构造方法，由后置处理器决定返回哪些构造方法
+		 * 第二次调用后置处理器 推断构造方法，由后置处理器决定返回哪些构造方法 （没有无参构造方法且有有参构造方法的情况）
+		 *
 		 */
 		Constructor<?>[] ctors = determineConstructorsFromBeanPostProcessors(beanClass, beanName);
 		if (ctors != null || mbd.getResolvedAutowireMode() == AUTOWIRE_CONSTRUCTOR ||
@@ -1170,7 +1186,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		// No special handling: simply use no-arg constructor.
-		// 使用默认的无参构造方法进行初始化
+		// 如果上面没有找到有参构造方法，则使用默认的无参构造方法进行初始化
 		return instantiateBean(beanName, mbd);
 	}
 
@@ -1263,6 +1279,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 						getAccessControlContext());
 			}
 			else {
+				//getInstantiationStrategy() 得到类的实例化策略
+				//默认情况下是得到一个反射的实例化策略
 				beanInstance = getInstantiationStrategy().instantiate(mbd, beanName, this);
 			}
 			BeanWrapper bw = new BeanWrapperImpl(beanInstance);

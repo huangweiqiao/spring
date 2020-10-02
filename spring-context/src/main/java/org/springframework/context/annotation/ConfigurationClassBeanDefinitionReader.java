@@ -139,6 +139,7 @@ class ConfigurationClassBeanDefinitionReader {
 		if (configClass.isImported()) {
 			registerBeanDefinitionForImportedConfigurationClass(configClass);
 		}
+		//如果类有@Bean 的方法
 		for (BeanMethod beanMethod : configClass.getBeanMethods()) {
 			loadBeanDefinitionsForBeanMethod(beanMethod);
 		}
@@ -215,11 +216,16 @@ class ConfigurationClassBeanDefinitionReader {
 
 		if (metadata.isStatic()) {
 			// static @Bean method
+			/**
+			 * 如果 @Bean方法是静态的，这设置为工厂方法（相当于配置文件中，<bean id="orderService" class="com.hwq.service.OrderService" factory-method="methodName"></bean>）
+			 * 静态@Bean方法的特点是，如果在其他 @Bean 方法中调用了 静态@Bean方法时，调用了几次就会执行几次
+			 */
 			beanDef.setBeanClassName(configClass.getMetadata().getClassName());
 			beanDef.setFactoryMethodName(methodName);
 		}
 		else {
 			// instance @Bean method
+			// 非静态 @Bean方法 只会执行一次，不管在任何地方调用若干次
 			beanDef.setFactoryBeanName(configClass.getBeanName());
 			beanDef.setUniqueFactoryMethodName(methodName);
 		}

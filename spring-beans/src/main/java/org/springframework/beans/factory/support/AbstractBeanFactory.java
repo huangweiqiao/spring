@@ -347,6 +347,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		 另外在创建bean的时候先去调用getSingleton(beaName)方法还有另一种原因，那就是 lazy=true 的bean。
 		 */
 		Object sharedInstance = getSingleton(beanName);
+
 		if (sharedInstance != null && args == null) {
 			if (logger.isDebugEnabled()) {
 				if (isSingletonCurrentlyInCreation(beanName)) {
