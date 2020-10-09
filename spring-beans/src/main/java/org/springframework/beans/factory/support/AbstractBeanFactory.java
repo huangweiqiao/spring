@@ -358,7 +358,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					logger.debug("Returning cached instance of singleton bean '" + beanName + "'");
 				}
 			}
-
+			/**
+			 * sharedInstance 如果不等于空
+			 * 如果sharedInstance是普通的单例bean,下面的方法会直接返回，但如果
+			 * sharedInstance是FactoryBean类型的，则需要调用getObject工厂方法获取真正的bean实例。如果用户想获取FactoryBean本身，这里也不会
+			 * 做特别处理，直接返回即可。笔记FactoryBean的实现类本身也是一种bean,只不过具有一点特殊的功能而已。
+			 */
 			bean = getObjectForBeanInstance(sharedInstance, name, beanName, null);
 		}
 

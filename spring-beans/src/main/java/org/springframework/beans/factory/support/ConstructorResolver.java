@@ -110,20 +110,31 @@ class ConstructorResolver {
 	 */
 	public BeanWrapper autowireConstructor(String beanName, RootBeanDefinition mbd,
 			@Nullable Constructor<?>[] chosenCtors, @Nullable Object[] explicitArgs) {
-
+		/**
+		 * 实例化一个 BeanWrapperImpl 对象，
+		 * 其实前面外部返回的BeanWrapper就是这个 BeanWrapperImpl的对象，
+		 * 因为BeanWrapper是个接口
+		 */
 		BeanWrapperImpl bw = new BeanWrapperImpl();
 		this.beanFactory.initBeanWrapper(bw);
-
+		//这个是决定我们到底使用哪个构造方法来实例对象
 		Constructor<?> constructorToUse = null;
+		//构造方法需要哪些参数
 		ArgumentsHolder argsHolderToUse = null;
 		Object[] argsToUse = null;
-
+		/**
+		 * 确定参数值列表
+		 * argsToUse 可以有两种办法设置
+		 * 第一种通过beanDefinition设置
+		 * 第二种通过xml设置
+		 */
 		if (explicitArgs != null) {
 			argsToUse = explicitArgs;
 		}
 		else {
 			Object[] argsToResolve = null;
 			synchronized (mbd.constructorArgumentLock) {
+				//获取已解析的构造方法，一般不会有，因为构造方法一般会提供一个，除非有多个，那么才会存在已经解析完成的构造方法
 				constructorToUse = (Constructor<?>) mbd.resolvedConstructorOrFactoryMethod;
 				if (constructorToUse != null && mbd.constructorArgumentsResolved) {
 					// Found a cached constructor...
@@ -140,17 +151,33 @@ class ConstructorResolver {
 
 		if (constructorToUse == null) {
 			// Need to resolve the constructor.
+			/**
+			 * 如果没有已经解析的构造方法则需要去解析构造方法，
+			 * 判断构造方法是否为空，判断是否根据构造方法自动注入
+			 */
 			boolean autowiring = (chosenCtors != null ||
 					mbd.getResolvedAutowireMode() == AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR);
 			ConstructorArgumentValues resolvedValues = null;
 
+			//定义了最小参数个数
+			//如果你给构造方法的参数列表给定了具体的值，那么这些值的个数就是构造方法参数的个数
 			int minNrOfArgs;
 			if (explicitArgs != null) {
 				minNrOfArgs = explicitArgs.length;
 			}
 			else {
+				//实例一个对象，用来存储构造方法的参数值，当中主要存放了参数值和参数值所对应的小标
 				ConstructorArgumentValues cargs = mbd.getConstructorArgumentValues();
 				resolvedValues = new ConstructorArgumentValues();
+				/**
+				 * 确定构造方法参数数量，假设有如下配置：
+				 * <bean id="Person" class="com.hwq.Person">
+				 *     <constructor-arg index="0" value="zhangsan"></>
+				 *     <constructor-arg index="1" value="20"></>
+				 *     <constructor-arg index="2" value="man"></>
+				 * </bean>
+				 * minNrOfArgs =3
+				 */
 				minNrOfArgs = resolveConstructorArguments(beanName, mbd, bw, cargs, resolvedValues);
 			}
 
@@ -168,11 +195,16 @@ class ConstructorResolver {
 							"] from ClassLoader [" + beanClass.getClassLoader() + "] failed", ex);
 				}
 			}
+			/**
+			 * 对构造方法进行排序，优先访问权限，然后参数个数
+			 */
 			AutowireUtils.sortConstructors(candidates);
+			//定义一个差异变量，注意这个变量，后面有用到
 			int minTypeDiffWeight = Integer.MAX_VALUE;
+			//有歧义的构造方法
 			Set<Constructor<?>> ambiguousConstructors = null;
 			LinkedList<UnsatisfiedDependencyException> causes = null;
-
+			//循环所有的构造方法
 			for (Constructor<?> candidate : candidates) {
 				Class<?>[] paramTypes = candidate.getParameterTypes();
 

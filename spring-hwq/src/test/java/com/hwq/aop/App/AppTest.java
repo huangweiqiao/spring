@@ -11,6 +11,7 @@ import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 
 public class AppTest {
 
