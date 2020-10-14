@@ -70,13 +70,40 @@ import org.springframework.util.StringUtils;
  */
 public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements SingletonBeanRegistry {
 
-	/** Cache of singleton objects: bean name --> bean instance */
+	/**
+	 * Cache of singleton objects: bean name --> bean instance
+	 * 平常说从容器中获取到bean对象，其实就是从这里获取了
+	 */
 	private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);
 
-	/** Cache of singleton factories: bean name --> ObjectFactory */
+
+	/**
+	 * Cache of singleton factories: bean name --> ObjectFactory
+	 * 在循环引用的情况下，例如 A 依赖 B，B 依赖 A，
+	 * spring首先创建A对象（这时还没有填充依赖），先将A对象放到该MAP中，
+	 * 然后填充A的依赖，发现A依赖B，因此去获取B对象，B对象还没创建，
+	 * 因此创建B对象，B对象创建完(这时还没有填充依赖)，先将B对象放入该MAP中，
+	 * 然后填充B的依赖，发现B依赖A，因此去获取A对象，现在A对象存在该MAP当中了，
+	 * 因此依赖成功，将A对象获取出来设置到自己的属性当中，B对象继续剩下的生命周期步骤，
+	 * B对象完成生命周期后返回给A对象，因此A对象也依赖B成功，A对象继续剩下的生命周期步骤。
+	 *
+	 */
 	private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
 
-	/** Cache of early singleton objects: bean name --> bean instance */
+
+	/**
+	 * Cache of early singleton objects: bean name --> bean instance
+	 * 循环依赖当中 如果从上面的 singletonFactories中获取到对象之后，会从singletonFactories这个map中删除，然后将
+	 * 获取的对象存入到该Map中，以后要用到对象而对象又不在singletonObjects（spring生命周期完成后才会放到这里）中，这时可以从该Map中取，
+	 * 因为从 singletonFactories这个map中取出来的对象是 ObjectFactory，
+	 * 而从这个factory中得到的对象还会经历很多后置处理器的处理，因此将factory中得到的对象放到当前这个map中以后取出来就简单了，
+	 * 不需要后置处理器处理，这样节省了程序的启动时间也避免了重复执行某些后置处理器。
+	 *
+	 * 例如 A 依赖 B，B 依赖 A，B 依赖 C ，C 依赖 A
+	 *
+	 * 当 B 从 singletonFactories 中找到 A 时 将A存到 earlySingletonObjects 中，然后将A从singletonFactories中删掉，
+	 * 但是B还依赖C，因此会去创建C，当C填充属性时发现依赖A，因此会去获取A，此时就可以从 earlySingletonObjects 中获取A了。
+	 */
 	private final Map<String, Object> earlySingletonObjects = new HashMap<>(16);
 
 	/** Set of registered singletons, containing the bean names in registration order */

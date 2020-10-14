@@ -10,6 +10,9 @@ public class BService {
 	@Autowired
 	AService aService;
 
+	@Autowired
+	EService cService;
+
 	public BService(){
 		System.out.println("BService....构造函数....");
 	}

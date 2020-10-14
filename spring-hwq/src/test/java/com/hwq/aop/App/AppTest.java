@@ -4,6 +4,7 @@ import com.hwq.aop.config.LifeConfig;
 import com.hwq.aop.interceptor.MyMethodInterceptor;
 import com.hwq.aop.interceptor.OrderService;
 import com.hwq.aop.service.AService;
+import com.hwq.aop.service.EService;
 import org.springframework.cglib.core.SpringNamingPolicy;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.MethodInterceptor;
@@ -16,8 +17,9 @@ import java.lang.reflect.Proxy;
 public class AppTest {
 
 	public static void main(String[] args) {
-		configTest();
+		//configTest();
 		//cglibEnhance();
+		testEService();
 	}
 
 
@@ -41,6 +43,12 @@ public class AppTest {
 		}catch (Exception e){
 			e.printStackTrace();
 		}
+	}
+
+	public static void testEService(){
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(LifeConfig.class);
+		EService bean = context.getBean(EService.class);
+		System.out.println(bean.getAService());
 	}
 
 }

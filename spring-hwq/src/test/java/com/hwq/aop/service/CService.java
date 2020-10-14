@@ -22,7 +22,7 @@ public class CService implements  BeanPostProcessor {
 
 	@Override
 	public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-		if (beanName.equals("AService")){
+		if (beanName.equals("DService")){
 			System.out.println("CService...BeanPostProcessor...postProcessBeforeInitialization...");
 		}
 		return bean;
@@ -30,7 +30,7 @@ public class CService implements  BeanPostProcessor {
 
 	@Override
 	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-		if (beanName.equals("AService")){
+		if (beanName.equals("DService")){
 			System.out.println("CService...BeanPostProcessor...postProcessAfterInitialization...");
 		}
 		return bean;
